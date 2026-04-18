@@ -1,0 +1,31 @@
+[
+  {
+    "subject": "Application for {role} at {company}",
+    "body": "Hello {company} Team,\n\nI would like to apply for the {role} position.\n\nI am a full-stack developer with experience in {skills}. I have worked on scalable web platforms, backend systems, AWS deployments, election-scale operations, and developer tools.\n\nGitHub: {github}\n\nPlease find my resume attached.\n\nRegards,\n{name}\n{email}\n{phone}"
+  },
+
+  {
+    "subject": "{name} | Interested in {role}",
+    "body": "Dear Hiring Team,\n\nI came across your opening for {role} at {company} and would love to be considered.\n\nMy experience includes SvelteKit, Node.js, Rust, Flutter, PostgreSQL, AWS, Docker, and Kubernetes. I enjoy solving real-world engineering challenges.\n\nAttached is my resume.\n\nBest regards,\n{name}\n{location}\n{email}"
+  },
+
+  {
+    "subject": "{role} Candidate Application",
+    "body": "Hello,\n\nI am reaching out regarding the {role} opportunity at {company}.\n\nI recently worked on full-stack systems, cloud deployments, geolocation systems, and production applications used in real operational environments.\n\nPlease review my attached resume.\n\nThanks,\n{name}\n{email}\nGitHub: {github}"
+  },
+
+  {
+    "subject": "Backend / Full Stack Engineer Application",
+    "body": "Hi {company},\n\nI am interested in contributing as a {role}.\n\nMy background includes backend systems, APIs, authentication, PostgreSQL optimization, Flutter apps, and AWS deployment.\n\nI would appreciate the opportunity to interview.\n\nRegards,\n{name}\n{phone}\n{email}"
+  },
+
+  {
+    "subject": "{name} applying for {role}",
+    "body": "Dear Team,\n\nPlease accept my application for the {role} role.\n\nI bring startup experience, fast product iteration skills, strong backend knowledge, and cross-platform development experience.\n\nResume attached.\n\nThank you,\n{name}\n{email}"
+  },
+
+  {
+    "subject": "Application | {role}",
+    "body": "Hello {company},\n\nI’m a developer based in {location} interested in your {role} opening.\n\nI have shipped products using Node.js, SvelteKit, Rust, Flutter, PostgreSQL, and cloud tooling.\n\nPortfolio: {github}\nResume attached.\n\nBest,\n{name}"
+  }
+]
