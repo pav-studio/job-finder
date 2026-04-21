@@ -3,3 +3,5 @@ __pycache__/
 jobs.db
 log.txt
 data.json
+config.jsonc
+

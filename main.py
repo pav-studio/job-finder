@@ -196,8 +196,8 @@ def search_jobs():
 
     params = {
         "query": query,
-        "page": "2",
-        "num_pages": "5",
+        "page": config.get("page", "2"),
+        "num_pages": config.get("num_pages", "5"),
         "date_posted": "all",
         "country": config.get("country", "in"),
         "language": config.get("language", "en")

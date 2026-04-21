@@ -1,0 +1,16 @@
+{
+  "country": "in",
+  "language": "en",
+  "page": "2",
+  "num_pages": "5",
+  "skill": [
+    // Your skills
+  ],
+  "location": [
+    // your desired city and location
+    "Remote"
+  ],
+  "role": [
+    // role as in Developer, Marketing 
+  ]
+}

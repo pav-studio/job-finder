@@ -1,26 +1,24 @@
 {
   "country": "in",
   "language": "en",
+  "page": "2",
+  "num_pages": "5",
   "skill": [
     "Svelte",
     "Flutter",
-    "Axum",
     "Rust",
-    "Node.js",
     "NodeJS",
     "Python",
-    "Postgres",
     "PostgreSQL",
     "Cloud",
     "DevOps",
     "AWS",
-    "Blender",
     "JavaScript"
   ],
   "location": [
     "Nagpur",
     "Banglore",
-    "Remote"  
+    "Remote"
   ],
   "role": [
     "Developer",

@@ -87,35 +87,8 @@ Windows usually already includes it.
 
 ## Setup `.env`
 
-Create a `.env` file:
-
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USER=yourgmail@gmail.com
-SMTP_PASS=your_app_password
-FROM_EMAIL=yourgmail@gmail.com
-
-DAILY_SEND_LIMIT=10
-WAIT_SECONDS=90
-DB_FILE=jobs.db
-RESUME_FILE=resume.pdf
-TEMPLATE_FILE=main.json
-
-RAPIDAPI_KEY=your_key
-RAPIDAPI_HOST=jsearch.p.rapidapi.com
-LINKEDIN_API_HOST=linkedin-data-api.p.rapidapi.com
-
-FULL_NAME=Your Name
-PHONE=+91xxxxxxxxxx
-EMAIL=you@email.com
-LOCATION=Nagpur, India
-GITHUB=https://github.com/yourname
-LINKEDIN=https://linkedin.com/in/yourprofile
-
-COUNTRY=IN
-REMOTE_ONLY=true
-```
+change the details in .env.example file and rename it as .env file,
+also read config.example.jsonc and change details there and also rename it as config.jsonc
 
 ## Gmail SMTP Setup
 
