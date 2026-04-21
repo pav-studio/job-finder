@@ -1,0 +1,33 @@
+{
+  "country": "in",
+  "language": "en",
+  "skill": [
+    "Svelte",
+    "Flutter",
+    "Axum",
+    "Rust",
+    "Node.js",
+    "NodeJS",
+    "Python",
+    "Postgres",
+    "PostgreSQL",
+    "Cloud",
+    "DevOps",
+    "AWS",
+    "Blender",
+    "JavaScript"
+  ],
+  "location": [
+    "Nagpur",
+    "Banglore",
+    "Remote"  
+  ],
+  "role": [
+    "Developer",
+    "Engineer",
+    "Backend Developer",
+    "Frontend Developer",
+    "Software Engineer",
+    "Full Stack Developer"
+  ]
+}

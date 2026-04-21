@@ -4,6 +4,7 @@ import random
 import smtplib
 import requests
 import tkinter as tk
+
 from tkinter import messagebox, scrolledtext
 from email.message import EmailMessage
 from dotenv import load_dotenv
@@ -31,10 +32,11 @@ FROM_EMAIL = os.getenv("FROM_EMAIL")
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST")
 
-DAILY_SEND_LIMIT = int(os.getenv("DAILY_SEND_LIMIT", 10))
+MAX_APPLICATIONS = int(os.getenv("MAX_APPLICATIONS", 15))
 
 RESUME_FILE = os.getenv("RESUME_FILE", "resume.pdf")
 TEMPLATE_FILE = os.getenv("TEMPLATE_FILE", "mail.json")
+CONFIG_FILE = os.getenv("CONFIG_FILE", "config.jsonc")
 
 PROFILE = {
     "name": os.getenv("FULL_NAME"),
@@ -45,114 +47,145 @@ PROFILE = {
     "linkedin": os.getenv("LINKEDIN")
 }
 
-SEARCH_KEYWORDS = [
 
-    # ==================================================
-    # INDIA PRIORITY - FULL STACK / FRONTEND
-    # ==================================================
-    "full stack developer India remote",
-    "frontend developer India React remote",
-    "SvelteKit developer India remote",
-    "Svelte developer India remote",
-    "JavaScript developer India remote",
-    "Tailwind CSS frontend India remote",
-    "React developer India hiring",
-    "web developer India startup remote",
+# =====================================================
+# FILE LOGGING (SERVER RESPONSE ONLY)
+# =====================================================
 
-    # ==================================================
-    # INDIA PRIORITY - BACKEND
-    # ==================================================
-    "backend engineer India Node.js remote",
-    "Node.js developer India remote hiring",
-    "Express.js backend India remote",
-    "Rust backend engineer India remote",
-    "Python backend India remote",
-    "Java backend developer India remote",
-    "C++ backend engineer India hiring",
-    "REST API developer India remote",
-    "WebSockets engineer India remote",
+def write_server_log(query, response_text):
+    try:
+        with open("log.txt", "a", encoding="utf-8") as f:
+            f.write("=" * 100 + "\n")
+            f.write(f"QUERY: {query}\n")
+            f.write("-" * 100 + "\n")
+            f.write(response_text)
+            f.write("\n\n")
+    except Exception as e:
+        log("ERROR", f"log.txt write failed: {e}")
 
-    # ==================================================
-    # INDIA PRIORITY - DATABASE / GIS
-    # ==================================================
-    "PostgreSQL developer India remote",
-    "PostGIS geospatial engineer India remote",
-    "SQLite application developer India",
-    "SQL optimization engineer India remote",
-    "geolocation backend India remote",
-
-    # ==================================================
-    # INDIA PRIORITY - DEVOPS / CLOUD
-    # ==================================================
-    "AWS cloud engineer India remote",
-    "Docker Kubernetes engineer India remote",
-    "DevOps engineer India startup remote",
-    "CI/CD engineer India remote",
-    "Linux systems engineer India remote",
-
-    # ==================================================
-    # FLUTTER / CROSS PLATFORM
-    # ==================================================
-    "Flutter developer India remote",
-    "Flutter desktop developer India",
-    "Flutter mobile developer India remote",
-    "cross platform developer India Flutter",
-
-    # ==================================================
-    # REMOTE GLOBAL (OPEN TO INTERNATIONAL)
-    # ==================================================
-    "remote full stack developer worldwide",
-    "remote backend engineer worldwide",
-    "remote React developer worldwide",
-    "remote Node.js engineer worldwide",
-    "remote SvelteKit developer worldwide",
-    "remote Flutter developer worldwide",
-    "remote Rust engineer worldwide",
-    "remote DevOps engineer worldwide",
-    "remote software engineer international applicants",
-    "remote startup engineer global hiring",
-
-    # ==================================================
-    # EXPLICITLY NON-LOCATION RESTRICTED
-    # ==================================================
-    "remote jobs open worldwide software engineer",
-    "remote hiring global candidates developer",
-    "remote company hiring international developers",
-    "remote engineering jobs work from anywhere",
-    "global remote backend engineer hiring",
-
-    # ==================================================
-    # STARTUP / FAST GROWTH
-    # ==================================================
-    "startup full stack developer India remote",
-    "startup backend engineer remote worldwide",
-    "startup software engineer Node.js India",
-    "startup React developer remote global",
-
-    # ==================================================
-    # GENERAL FALLBACKS
-    # ==================================================
-    "software engineer India remote",
-    "developer jobs India remote startup",
-    "full stack engineer remote hiring",
-    "backend developer remote no location restriction"
-]
 
 # =====================================================
 # HELPERS
 # =====================================================
+
+def load_jsonc(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = []
+
+            for line in f:
+                if "//" in line:
+                    line = line.split("//")[0]
+
+                lines.append(line)
+
+        data = json.loads("".join(lines))
+        return data
+
+    except FileNotFoundError:
+        log("ERROR", f"Missing config file: {path}")
+        return {
+            "skill": [],
+            "location": ["Remote"]
+        }
+
+    except Exception as e:
+        log("ERROR", f"Invalid config file: {e}")
+        return {
+            "skill": [],
+            "location": ["Remote"]
+        }
+
+
+def load_config():
+    return load_jsonc(CONFIG_FILE)
+
 
 def load_templates():
     with open(TEMPLATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def search_jobs():
-    print("=" * 70)
-    print("[INFO] Starting job search...")
+# =====================================================
+# SEO QUERY BUILDER
+# =====================================================
 
-    query = random.choice(SEARCH_KEYWORDS)
-    print(f"[INFO] Selected query: {query}")
+def build_query(config):
+    skills = config.get("skill", [])
+    roles = config.get("role", [])
+    locations = config.get("location", [])
+
+    if not skills:
+        skills = ["Software"]
+
+    if not roles:
+        roles = ["Developer"]
+
+    if not locations:
+        locations = ["Remote"]
+
+    skill = random.choice(skills)
+    role = random.choice(roles)
+    location = random.choice(locations)
+
+    return f"{skill} {role} {location}"
+
+
+# =====================================================
+# SEO SCORE
+# =====================================================
+
+def score_job(job, config):
+    score = 0
+
+    text = (
+        job["role"] + " " +
+        job["description"] + " " +
+        job["location"]
+    ).lower()
+
+    title = job["role"].lower()
+
+    for skill in config.get("skill", []):
+        if skill.lower() in text:
+            score += 10
+
+    for word in ["remote", "wfh", "work from home", "worldwide"]:
+        if word in text:
+            score += 15
+
+    for good in ["developer", "engineer"]:
+        if good in title:
+            score += 8
+
+    for good in ["backend", "frontend", "software", "full stack"]:
+        if good in title:
+            score += 6
+
+    for bad in ["intern", "sales", "manager", "marketing"]:
+        if bad in title:
+            score -= 30
+
+    return score
+
+
+# =====================================================
+# SEARCH JOBS
+# =====================================================
+
+def search_jobs():
+    config = load_config()
+    query = build_query(config)
+
+    log("INFO", f"Searching jobs with query: {query}")
+
+    if not RAPIDAPI_KEY:
+        log("ERROR", "Missing RAPIDAPI_KEY")
+        return []
+
+    if not RAPIDAPI_HOST:
+        log("ERROR", "Missing RAPIDAPI_HOST")
+        return []
 
     url = "https://jsearch.p.rapidapi.com/search"
 
@@ -163,28 +196,13 @@ def search_jobs():
 
     params = {
         "query": query,
-        "page": "1",
-        "num_pages": "1"
+        "page": "2",
+        "num_pages": "5",
+        "date_posted": "all",
+        "country": config.get("country", "in"),
+        "language": config.get("language", "en")
     }
 
-    # ---------------------------------------------
-    # ENV CHECKS
-    # ---------------------------------------------
-    if not RAPIDAPI_KEY:
-        print("[ERROR] RAPIDAPI_KEY missing")
-        return []
-
-    if not RAPIDAPI_HOST:
-        print("[ERROR] RAPIDAPI_HOST missing")
-        return []
-
-    print(f"[INFO] URL: {url}")
-    print(f"[INFO] HOST: {RAPIDAPI_HOST}")
-    print(f"[INFO] PARAMS: {params}")
-
-    # ---------------------------------------------
-    # REQUEST
-    # ---------------------------------------------
     try:
         response = requests.get(
             url,
@@ -193,155 +211,111 @@ def search_jobs():
             timeout=20
         )
 
-        print(f"[INFO] Status Code: {response.status_code}")
-
     except requests.exceptions.Timeout:
-        print("[ERROR] Request timeout")
+        log("ERROR", "API timeout")
         return []
 
     except requests.exceptions.ConnectionError:
-        print("[ERROR] Network connection failed")
+        log("ERROR", "Network connection failed")
         return []
 
     except Exception as e:
-        print(f"[ERROR] Request failed: {e}")
+        log("ERROR", f"Request failed: {e}")
         return []
 
-    # ---------------------------------------------
-    # RAW PREVIEW
-    # ---------------------------------------------
-    print("-" * 70)
-    print("[INFO] Raw response preview:")
-    print(response.text[:1000])
-    print("-" * 70)
+    write_server_log(query, response.text)
 
     if response.status_code != 200:
-        print(f"[ERROR] Non-200 response: {response.status_code}")
+        log("ERROR", f"API returned status {response.status_code}")
         return []
 
-    # ---------------------------------------------
-    # JSON PARSE
-    # ---------------------------------------------
     try:
         data = response.json()
-        print("[INFO] JSON parsed successfully.")
+
     except Exception as e:
-        print(f"[ERROR] JSON parse failed: {e}")
+        log("ERROR", f"JSON parse failed: {e}")
         return []
 
-    # ---------------------------------------------
-    # STRUCTURE DEBUG
-    # ---------------------------------------------
-    print("[INFO] Top-level JSON keys:")
-    print(list(data.keys()))
+    raw_jobs = data.get("data", [])
 
-    raw_jobs = data.get("data") or []
-
-    if not isinstance(raw_jobs, list):
-        print("[ERROR] 'data' is not a list")
-        print(type(raw_jobs))
+    if not raw_jobs:
+        log("WARNING", "No jobs returned by API")
         return []
 
-    if len(raw_jobs) == 0:
-        print("[WARNING] No jobs returned.")
-        return []
-
-    print(f"[INFO] Raw jobs count: {len(raw_jobs)}")
-
-    # ---------------------------------------------
-    # PARSE SAFELY
-    # ---------------------------------------------
     jobs = []
 
-    for idx, item in enumerate(raw_jobs[:15], start=1):
+    for item in raw_jobs:
+        try:
+            company = str(item.get("employer_name") or "Unknown").strip()
 
-        if not isinstance(item, dict):
-            print(f"[WARNING] Job #{idx} skipped (not dict)")
-            continue
+            role = str(
+                item.get("job_title") or "Software Engineer"
+            ).strip()
 
-        print("=" * 70)
-        print(f"[DEBUG] RAW JOB #{idx}")
-        print(json.dumps(item, indent=2, ensure_ascii=False)[:3000])
+            location = (
+                str(item.get("job_city") or "")
+                or str(item.get("job_country") or "")
+                or "Remote"
+            ).strip()
 
-        company = str(item.get("employer_name") or "Unknown").strip()
+            description = str(
+                item.get("job_description") or ""
+            ).strip()[:2500]
 
-        role = str(item.get("job_title") or "Software Engineer").strip()
+            website = str(
+                item.get("employer_website") or ""
+            ).strip()
 
-        location = (
-            str(item.get("job_city") or "")
-            or str(item.get("job_country") or "")
-            or "Remote"
-        ).strip()
+            apply_link = str(
+                item.get("job_apply_link")
+                or item.get("job_google_link")
+                or ""
+            ).strip()
 
-        description = str(item.get("job_description") or "").strip()[:1000]
+            src = website or apply_link
+            domain = ""
 
-        website = str(item.get("employer_website") or "").strip()
-
-        apply_link = str(
-            item.get("job_apply_link")
-            or item.get("job_google_link")
-            or ""
-        ).strip()
-
-        source = "jsearch"
-
-        # -----------------------------
-        # DOMAIN PARSE SAFE
-        # -----------------------------
-        domain = ""
-
-        if website:
-            try:
+            if src:
                 domain = (
-                    website.replace("https://", "")
-                    .replace("http://", "")
-                    .replace("www.", "")
-                    .split("/")[0]
-                    .strip()
+                    src.replace("https://", "")
+                       .replace("http://", "")
+                       .replace("www.", "")
+                       .split("/")[0]
+                       .strip()
                 )
-            except Exception as e:
-                print(f"[WARNING] Domain parse failed: {e}")
 
-        # fallback from apply link
-        if not domain and apply_link:
-            try:
-                domain = (
-                    apply_link.replace("https://", "")
-                    .replace("http://", "")
-                    .replace("www.", "")
-                    .split("/")[0]
-                    .strip()
-                )
-            except:
-                pass
+            email = f"careers@{domain}" if domain else ""
 
-        email = f"careers@{domain}" if domain else ""
+            job = {
+                "company": company,
+                "email": email,
+                "role": role,
+                "location": location,
+                "source": "jsearch",
+                "description": description,
+                "website": website,
+                "apply_link": apply_link
+            }
 
-        parsed_job = {
-            "company": company,
-            "email": email,
-            "role": role,
-            "location": location,
-            "source": source,
-            "description": description,
-            "website": website,
-            "apply_link": apply_link
-        }
+            job["score"] = score_job(job, config)
 
-        print("[PARSED JOB]")
-        print(json.dumps(parsed_job, indent=2, ensure_ascii=False))
+            jobs.append(job)
 
-        jobs.append(parsed_job)
+        except Exception as e:
+            log("WARNING", f"Skipped malformed row: {e}")
 
-    print("=" * 70)
-    print(f"[SUCCESS] Final parsed jobs count: {len(jobs)}")
-    print("=" * 70)
+    jobs.sort(key=lambda x: x["score"], reverse=True)
+
+    log("INFO", f"Parsed jobs count: {len(jobs)}")
 
     return jobs
 
 
-def build_email(job):
+# =====================================================
+# EMAIL
+# =====================================================
 
+def build_email(job):
     templates = load_templates()
     tpl = random.choice(templates)
 
@@ -363,9 +337,11 @@ def build_email(job):
     )
 
     msg = EmailMessage()
+
     msg["From"] = FROM_EMAIL
     msg["To"] = job["email"]
     msg["Subject"] = subject
+
     msg.set_content(body)
 
     if os.path.exists(RESUME_FILE):
@@ -374,7 +350,7 @@ def build_email(job):
                 f.read(),
                 maintype="application",
                 subtype="pdf",
-                filename="Tanishq_Dhote_Resume.pdf"
+                filename="resume.pdf"
             )
 
     return msg
@@ -387,7 +363,7 @@ def send_mail(msg):
 
 
 # =====================================================
-# GUI APP
+# UI
 # =====================================================
 
 class JobApp:
@@ -395,68 +371,125 @@ class JobApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Job Apply Assistant")
-        self.root.geometry("900x700")
+        self.root.geometry("1280x860")
 
         self.jobs = []
         self.index = 0
 
-        title = tk.Label(root, text="Job Apply Assistant", font=("Arial", 20, "bold"))
-        title.pack(pady=10)
+        tk.Label(
+            root,
+            text="JOB APPLY ASSISTANT",
+            font=("Consolas", 22, "bold"),
+            anchor="w"
+        ).pack(fill="x", padx=10, pady=10)
 
-        top_frame = tk.Frame(root)
-        top_frame.pack()
+        top = tk.Frame(root)
+        top.pack(fill="x", padx=10)
 
-        self.search_btn = tk.Button(top_frame, text="Load Jobs", width=20, command=self.load_jobs)
-        self.search_btn.grid(row=0, column=0, padx=10)
+        tk.Button(top, text="Load Jobs", width=18,
+                  command=self.load_jobs).pack(side="left", padx=5)
 
-        self.skip_btn = tk.Button(top_frame, text="Skip", width=20, command=self.skip_job)
-        self.skip_btn.grid(row=0, column=1, padx=10)
+        tk.Button(top, text="Skip", width=18,
+                  command=self.skip_job).pack(side="left", padx=5)
 
-        self.apply_btn = tk.Button(top_frame, text="Apply", width=20, command=self.apply_job)
-        self.apply_btn.grid(row=0, column=2, padx=10)
+        tk.Button(top, text="Apply", width=18,
+                  command=self.apply_job).pack(side="left", padx=5)
 
-        self.info = tk.Label(root, text="", font=("Arial", 12))
-        self.info.pack(pady=10)
+        self.info = tk.Label(
+            root,
+            text="No jobs loaded.",
+            font=("Consolas", 11),
+            justify="left",
+            anchor="w"
+        )
 
-        self.text = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=110, height=30)
-        self.text.pack(padx=10, pady=10)
+        self.info.pack(fill="x", padx=10, pady=10)
+
+        self.text = scrolledtext.ScrolledText(
+            root,
+            wrap=tk.WORD,
+            font=("Consolas", 11),
+            width=150,
+            height=42
+        )
+
+        self.text.pack(fill="both", expand=True, padx=10, pady=10)
 
     def load_jobs(self):
-        init_db()
-        self.jobs = search_jobs()
+        try:
+            init_db()
 
-        filtered = []
+            self.jobs = search_jobs()
 
-        for j in self.jobs:
-            if not already_applied(j["company"], j["email"]):
-                filtered.append(j)
+            before = len(self.jobs)
 
-        self.jobs = filtered
-        self.index = 0
-        self.show_current()
+            self.jobs = [
+                j for j in self.jobs
+                if not already_applied(
+                    j["company"],
+                    j["email"]
+                )
+            ]
+
+            removed = before - len(self.jobs)
+
+            if removed:
+                log("INFO", f"Filtered duplicates: {removed}")
+
+            if not self.jobs:
+                log("WARNING", "No jobs available")
+                messagebox.showwarning(
+                    "No Jobs",
+                    "No jobs found.\nCheck logs."
+                )
+
+            self.index = 0
+            self.show_current()
+
+        except Exception as e:
+            log("ERROR", f"Load jobs failed: {e}")
+            messagebox.showerror("Error", str(e))
 
     def show_current(self):
-
         if self.index >= len(self.jobs):
-            self.info.config(text="No more jobs in stack.")
+            self.info.config(text="No more jobs.")
             self.text.delete("1.0", tk.END)
             return
 
         job = self.jobs[self.index]
 
+        sent = count_today_sent()
+
         self.info.config(
-            text=f"{self.index+1}/{len(self.jobs)} | {job['company']} | {job['role']} | {job['location']}"
+            text=(
+                f"[{self.index+1}/{len(self.jobs)}]   "
+                f"Applied Today: {sent}/{MAX_APPLICATIONS}\n"
+                f"Company : {job['company']}\n"
+                f"Role    : {job['role']}\n"
+                f"Score   : {job['score']}"
+            )
         )
 
         self.text.delete("1.0", tk.END)
 
-        self.text.insert(tk.END,
-            f"Company: {job['company']}\n"
-            f"Role: {job['role']}\n"
-            f"Location: {job['location']}\n"
-            f"Email: {job['email']}\n"
-            f"Source: {job['source']}\n\n"
-            f"{job['description']}"
+        self.text.insert(
+            tk.END,
+            f"""
+==================================================================
+COMPANY     : {job['company']}
+ROLE        : {job['role']}
+LOCATION    : {job['location']}
+EMAIL       : {job['email']}
+SOURCE      : {job['source']}
+SCORE       : {job['score']}
+WEBSITE     : {job['website']}
+APPLY LINK  : {job['apply_link']}
+
+DESCRIPTION
+------------------------------------------------------------------
+{job['description']}
+==================================================================
+"""
         )
 
     def skip_job(self):
@@ -464,19 +497,23 @@ class JobApp:
         self.show_current()
 
     def apply_job(self):
-
         if self.index >= len(self.jobs):
             return
 
-        sent_today = count_today_sent()
+        sent = count_today_sent()
 
-        if sent_today >= DAILY_SEND_LIMIT:
-            messagebox.showwarning("Limit", "Daily send limit reached.")
+        if sent >= MAX_APPLICATIONS:
+            messagebox.showwarning(
+                "Limit",
+                "Daily application limit reached."
+            )
             return
 
         job = self.jobs[self.index]
 
         try:
+            log("INFO", f"Applying to {job['company']}")
+
             msg = build_email(job)
             send_mail(msg)
 
@@ -486,19 +523,22 @@ class JobApp:
                 role=job["role"],
                 location=job["location"],
                 source=job["source"],
-                keyword="manual_gui",
+                keyword="seo_search",
                 status="sent"
             )
 
-            log("INFO", f"Sent to {job['company']}")
+            log("INFO", f"Application sent to {job['company']}")
 
-            messagebox.showinfo("Success", f"Applied to {job['company']}")
+            messagebox.showinfo(
+                "Success",
+                f"Applied to {job['company']}"
+            )
 
             self.index += 1
             self.show_current()
 
         except Exception as e:
-            log("ERROR", str(e))
+            log("ERROR", f"Apply failed: {e}")
             messagebox.showerror("Failed", str(e))
 
 

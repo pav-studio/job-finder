@@ -1,3 +1,5 @@
 .env
 __pycache__/
 jobs.db
+log.txt
+data.json
