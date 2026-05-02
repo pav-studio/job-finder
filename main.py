@@ -308,7 +308,7 @@ def search_jobs():
 
     log("INFO", f"Parsed jobs count: {len(jobs)}")
 
-    return jobs
+    return jobs, query
 
 
 # =====================================================
@@ -360,6 +360,7 @@ def send_mail(msg):
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
         smtp.login(SMTP_USER, SMTP_PASS)
         smtp.send_message(msg)
+    
 
 
 # =====================================================
@@ -367,6 +368,10 @@ def send_mail(msg):
 # =====================================================
 
 class JobApp:
+    def prev_job(self):
+        if self.index > 0:
+            self.index -= 1
+            self.show_current()
 
     def __init__(self, root):
         self.root = root
@@ -388,6 +393,9 @@ class JobApp:
 
         tk.Button(top, text="Load Jobs", width=18,
                   command=self.load_jobs).pack(side="left", padx=5)
+        
+        tk.Button(top, text="Back", width=18,
+          command=self.prev_job).pack(side="left", padx=5)
 
         tk.Button(top, text="Skip", width=18,
                   command=self.skip_job).pack(side="left", padx=5)
@@ -419,7 +427,7 @@ class JobApp:
         try:
             init_db()
 
-            self.jobs = search_jobs()
+            self.jobs, self.query = search_jobs()
 
             before = len(self.jobs)
 
@@ -462,6 +470,7 @@ class JobApp:
 
         self.info.config(
             text=(
+                f"QUERY   : {self.query}\n\n"
                 f"[{self.index+1}/{len(self.jobs)}]   "
                 f"Applied Today: {sent}/{MAX_APPLICATIONS}\n"
                 f"Company : {job['company']}\n"
