@@ -59,14 +59,17 @@ venv\Scripts\activate
 #### Linux / macOS
 
 ```bash
-python3 -m venv venv
+python3 -m venv .venv
 source venv/bin/activate
 ```
 
 ### 3. Install Packages
 
 ```bash
-pip install requests python-dotenv
+python -m pip install --upgrade pip
+pip install requests python-dotenv pyinstaller
+
+pyinstaller --onefile --noconsole main.py
 ```
 
 ### 4. Tkinter (Only if missing)
