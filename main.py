@@ -1,12 +1,10 @@
 import os
 import json
 import random
-import smtplib
 import requests
 import tkinter as tk
-
+import webbrowser
 from tkinter import messagebox, scrolledtext
-from email.message import EmailMessage
 from dotenv import load_dotenv
 
 from db import (
@@ -315,51 +313,8 @@ def search_jobs():
 # EMAIL
 # =====================================================
 
-def build_email(job):
-    templates = load_templates()
-    tpl = random.choice(templates)
-
-    subject = tpl["subject"].format(
-        company=job["company"],
-        role=job["role"],
-        name=PROFILE["name"]
-    )
-
-    body = tpl["body"].format(
-        company=job["company"],
-        role=job["role"],
-        name=PROFILE["name"],
-        email=PROFILE["email"],
-        phone=PROFILE["phone"],
-        location=PROFILE["location"],
-        github=PROFILE["github"],
-        linkedin=PROFILE["linkedin"]
-    )
-
-    msg = EmailMessage()
-
-    msg["From"] = FROM_EMAIL
-    msg["To"] = job["email"]
-    msg["Subject"] = subject
-
-    msg.set_content(body)
-
-    if os.path.exists(RESUME_FILE):
-        with open(RESUME_FILE, "rb") as f:
-            msg.add_attachment(
-                f.read(),
-                maintype="application",
-                subtype="pdf",
-                filename="resume.pdf"
-            )
-
-    return msg
 
 
-def send_mail(msg):
-    with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
-        smtp.login(SMTP_USER, SMTP_PASS)
-        smtp.send_message(msg)
     
 
 
@@ -509,45 +464,47 @@ DESCRIPTION
         if self.index >= len(self.jobs):
             return
 
-        sent = count_today_sent()
+        job = self.jobs[self.index]
 
-        if sent >= MAX_APPLICATIONS:
+        apply_url = (
+            job.get("apply_link")
+            or job.get("website")
+            or ""
+        ).strip()
+
+        if not apply_url:
             messagebox.showwarning(
-                "Limit",
-                "Daily application limit reached."
+                "Missing Link",
+                "No apply link available for this job."
             )
             return
 
-        job = self.jobs[self.index]
-
         try:
-            log("INFO", f"Applying to {job['company']}")
+            log("INFO", f"Opening apply form for {job['company']}")
 
-            msg = build_email(job)
-            send_mail(msg)
+            # Opens in existing/default browser
+            webbrowser.open(apply_url)
 
             save_application(
                 company=job["company"],
-                email=job["email"],
+                email="",
                 role=job["role"],
                 location=job["location"],
                 source=job["source"],
-                keyword="seo_search",
-                status="sent"
+                keyword="manual_apply",
+                status="opened"
             )
 
-            log("INFO", f"Application sent to {job['company']}")
-
             messagebox.showinfo(
-                "Success",
-                f"Applied to {job['company']}"
+                "Opened",
+                f"Opened apply page for {job['company']}"
             )
 
             self.index += 1
             self.show_current()
 
         except Exception as e:
-            log("ERROR", f"Apply failed: {e}")
+            log("ERROR", f"Open apply link failed: {e}")
             messagebox.showerror("Failed", str(e))
 
 

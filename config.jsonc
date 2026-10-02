@@ -4,28 +4,38 @@
   "page": "2",
   "num_pages": "5",
   "skill": [
-    "Svelte",
-    "Flutter",
-    "Rust",
-    "NodeJS",
-    "Python",
-    "PostgreSQL",
-    "Cloud",
-    "DevOps",
-    "AWS",
-    "JavaScript"
+    "go",
+    "golang"
+    // "gin",
+    // "fiber"
+    // "Design",
+    // "UI/UX",
+    // "Art",
+    // "Svelte",
+    // "Flutter"
+    // "libGDX"
+    // "Rust"
+    // "NodeJS",
+    // "Python",
+    // "PostgreSQL",
+    // "Cloud",
+    // "DevOps",
+    // "AWS",
+    // "JavaScript"
   ],
   "location": [
     "Nagpur",
-    "Banglore",
+    "Pune",
+    // "Bangalore",
     "Remote"
   ],
   "role": [
     "Developer",
-    "Engineer",
-    "Backend Developer",
-    "Frontend Developer",
-    "Software Engineer",
-    "Full Stack Developer"
+    "WFH"
+    // "Engineer",
+    // "Backend Developer",
+    // "Frontend Developer",
+    // "Software Engineer",
+    // "Full Stack Developer"
   ]
 }
